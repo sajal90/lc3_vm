@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <signal.h>
@@ -172,7 +173,34 @@ void jsr_op(uint16_t instr)
 	}
 }
 
+void ld_op(uint16_t instr)
+{
+	uint16_t r0 = (instr >> 9) & 0x7;
+	uint16_t offset = sign_extend((instr & 0x1FF),9);
 
+	regs[r0] = mem_read(regs[R_PC] + offset);
+
+	update_flag(r0);
+}
+
+void ldr_op(uint16_t instr)
+{
+	uint16_t r0 = (instr >> 9) & 0x7;
+	uint16_t r1 = (instr >> 6) & 0x7;
+	uint16_t offset = sign_extend((instr & 0x3F),6);
+
+	regs[r0] = mem_read(regs[r1] + offset);
+	update_flag(r0);
+}
+
+void lea_op(uint16_t instr)
+{
+	uint16_t r0 = (instr >> 9) & 0x7;
+	uint16_t offset = sign_extend((instr & 0x1FF), 9);
+
+	regs[r0] = regs[R_PC] + offset;
+	update_flag(r0);
+}
 
 int main(int argc,const char *argv[])
 {
@@ -229,6 +257,12 @@ int main(int argc,const char *argv[])
 				break;
 			case OP_LD:
 				ld_op(instr);
+				break;
+			case OP_LDR:
+				ldr_op(instr);
+				break;
+			case OP_LEA:
+				lea_op(instr);
 				break;
 		}
 	}
