@@ -155,6 +155,25 @@ void jmp_op(uint16_t instr)
 	regs[R_PC] = regs[base_r];
 }
 
+void jsr_op(uint16_t instr)
+{
+	uint16_t flag = (instr >> 11) & 0x1;
+
+	regs[R_R7] = regs[R_PC];
+
+	if(flag)
+	{
+		regs[R_PC] += sign_extend((instr & 0x7FF),11);
+	}
+	else 
+	{
+		uint16_t r0 = (instr >> 6) & 0x7;
+		regs[R_PC] = regs[r0];
+	}
+}
+
+
+
 int main(int argc,const char *argv[])
 {
 	if(argc<2)
@@ -204,6 +223,12 @@ int main(int argc,const char *argv[])
 				break;
 			case OP_JMP:
 				jmp_op(instr);
+				break;
+			case OP_JSR:
+				jsr_op(instr);
+				break;
+			case OP_LD:
+				ld_op(instr);
 				break;
 		}
 	}
