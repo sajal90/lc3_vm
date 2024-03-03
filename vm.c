@@ -139,11 +139,27 @@ void not_op(uint16_t instr)
 	update_flag(r0);
 }
 
+void br_op(uint16_t instr)
+{
+	uint16_t cond = (instr >> 9) & 0x7;
+	
+	uint16_t offset = sign_extend((instr & 0x1FF),9);
+
+	if(cond & regs[R_COND])
+		regs[R_PC] += offset;
+}
+
+void jmp_op(uint16_t instr)
+{
+	uint16_t base_r = (instr >> 6) & 0x7;
+	regs[R_PC] = base_r;
+}
+
 int main(int argc,const char *argv[])
 {
 	if(argc<2)
 	{
-		printf("Usage: %s [image-file] ...\n",argv[argc-1]);
+		printf("Usage: %s [image-file]...\n",argv[argc-1]);
 		exit(2);
 	}
 	
@@ -183,7 +199,12 @@ int main(int argc,const char *argv[])
 			case OP_NOT:
 				not_op(instr);
 				break;
-
+			case OP_BR:
+				br_op(instr);
+				break;
+			case OP_JMP:
+				jmp_op(instr);
+				break;
 		}
 	}
 	return 0;
