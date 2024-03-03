@@ -109,7 +109,25 @@ void ldi_op(uint16_t instr)
 	update_flag(r0);
 }
 
+void and_op(uint16_t instr)
+{
+	uint16_t r0 = (instr >> 9) & 0x7;
+	uint16_t r1 = (instr >> 6) & 0x7;
 
+	uint16_t imm_flag = (instr >> 5) & 0x1;
+
+	if(imm_flag)
+	{
+		uint16_t imm = sign_extend((instr & 0x1F),5);
+		regs[r0] = regs[r1] & imm;
+	}
+	else
+	{
+		uint16_t r2 = (instr & 0x7);
+		regs[r0] = regs[r1] & regs[r2];
+	}
+	update_flag(r0);
+}
 
 int main(int argc,const char *argv[])
 {
@@ -149,6 +167,11 @@ int main(int argc,const char *argv[])
 			case OP_LDI:
 				ldi_op(instr);
 				break;
+			case OP_AND:
+				and_op(instr);
+				break;
+			
+
 		}
 	}
 	return 0;
