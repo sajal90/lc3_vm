@@ -129,6 +129,16 @@ void and_op(uint16_t instr)
 	update_flag(r0);
 }
 
+void not_op(uint16_t instr)
+{
+	uint16_t r0 = (instr >> 9) & 0x7;
+	uint16_t r1 = (instr >> 6) & 0x7;
+
+	regs[r0] = ~regs[r1];
+	
+	update_flag(r0);
+}
+
 int main(int argc,const char *argv[])
 {
 	if(argc<2)
@@ -170,7 +180,9 @@ int main(int argc,const char *argv[])
 			case OP_AND:
 				and_op(instr);
 				break;
-			
+			case OP_NOT:
+				not_op(instr);
+				break;
 
 		}
 	}
