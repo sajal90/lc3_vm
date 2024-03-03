@@ -100,6 +100,16 @@ void add_op(uint16_t instr)
 	update_flag(r0);
 }
 
+void ldi_op(uint16_t instr)
+{
+	uint16_t r0 = (instr >> 9) & 0x7;
+	uint16_t offset = sign_extend((instr & 0x1FF),9);;
+
+	regs[r0] = mem_read(mem_read(regs[R_PC] + offset));
+	update_flag(r0);
+}
+
+
 
 int main(int argc,const char *argv[])
 {
@@ -136,19 +146,10 @@ int main(int argc,const char *argv[])
 			case OP_ADD:
 				add_op(instr);
 				break;
-
+			case OP_LDI:
+				ldi_op(instr);
+				break;
 		}
-
 	}
-
 	return 0;
 }
-
-
-
-
-
-
-
-
-
