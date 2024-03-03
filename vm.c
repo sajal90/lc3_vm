@@ -202,6 +202,31 @@ void lea_op(uint16_t instr)
 	update_flag(r0);
 }
 
+void st_op(uint16_t instr)
+{
+	uint16_t r0 = (instr >> 9) & 0x7;
+	uint16_t offset = sign_extend((instr & 0x1FF), 9);
+	
+	mem_write(regs[R_PC] + offset,regs[r0]);
+}
+
+void sti_op(uint16_t instr)
+{
+	uint16_t r0 = (instr >> 9) & 0x7;
+	uint16_t offset = sign_extend((instr & 0x1FF), 9);
+
+	mem_write(mem_read(regs[R_PC) + offset),regs[r0]);
+}
+
+void str_op(uint16_t instr)
+{
+	uint16_t r0 = (instr >> 9) & 0x7;
+	uint16_t r1 = (instr >> 6) & 0x7;
+	uint16_t offset = sign_extend((instr & 0x3F), 6);
+
+	mem_write(regs[r1] + offset, r0);
+}
+
 int main(int argc,const char *argv[])
 {
 	if(argc<2)
@@ -263,6 +288,15 @@ int main(int argc,const char *argv[])
 				break;
 			case OP_LEA:
 				lea_op(instr);
+				break;
+			case OP_ST:
+				st_op(instr);
+				break;
+			case OP_STI:
+				sti_op(instr);
+				break;
+			case OP_STR:
+				str_op(instr);
 				break;
 		}
 	}
