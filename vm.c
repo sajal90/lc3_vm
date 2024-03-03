@@ -152,7 +152,7 @@ void br_op(uint16_t instr)
 void jmp_op(uint16_t instr)
 {
 	uint16_t base_r = (instr >> 6) & 0x7;
-	regs[R_PC] = base_r;
+	regs[R_PC] = regs[base_r];
 }
 
 int main(int argc,const char *argv[])
