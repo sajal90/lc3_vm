@@ -269,6 +269,18 @@ void out_trap()
 
 }
 
+void in_trap()
+{
+	printf("Enter a character: ");
+	char c = getchar();
+
+	putc(c,stdout);
+	fflush(stdout);
+	regs[R_R0] = (uint16_t) (c & 0xFF);
+
+	update_flag(R_R0);
+}
+
 int main(int argc,const char *argv[])
 {
 	if(argc<2)
@@ -352,6 +364,9 @@ int main(int argc,const char *argv[])
 						break;
 					case TRAP_OUT:
 						out_trap();
+						break;
+					case TRAP_IN:
+						in_trap();
 						break;
 				}
 		}
