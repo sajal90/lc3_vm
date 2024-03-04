@@ -276,9 +276,15 @@ void in_trap()
 
 	putc(c,stdout);
 	fflush(stdout);
-	regs[R_R0] = (uint16_t) (c & 0xFF);
+	regs[R_R0] = (uint16_t) c;
 
 	update_flag(R_R0);
+}
+
+void putsp_trap()
+{
+	
+
 }
 
 int main(int argc,const char *argv[])
@@ -367,6 +373,9 @@ int main(int argc,const char *argv[])
 						break;
 					case TRAP_IN:
 						in_trap();
+						break;
+					case TRAP_PUTSP:
+						putsp_trap();
 						break;
 				}
 		}
