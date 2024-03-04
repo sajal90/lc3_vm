@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -51,6 +52,16 @@ enum
 	OP_RES,   //reserved(unused)
 	OP_LEA,   //load effective address
 	OP_TRAP,  //execute trap
+};
+
+enum
+{
+	TRAP_GETC  = 0x20, // get char from the keyboard, not echoed
+	TRAP_OUT   = 0x21, // output a char
+	TRAP_PUTS  = 0x22, // output a word string
+	TRAP_IN    = 0x23, // get char from the keyboard, echoed on terminal
+	TRAP_PUTSP = 0x24, // output a byte string
+	TRAP_HALT  = 0x25, // halt the program
 };
 
 #define MAX_MEM (1<<16)
@@ -227,6 +238,29 @@ void str_op(uint16_t instr)
 	mem_write(regs[r1] + offset, r0);
 }
 
+void puts_trap()
+{
+	uint16_t *c = memory + regs[R_R0];
+
+	while(*c)
+	{
+		putc((char)*c,stdout);
+	}
+	fflush(stdout);
+
+}
+
+void getc_trap()
+{
+	char c = getchar();
+
+	regs[R_R0] = (int) c;
+	regs[R_R0] &= 0xFF;
+
+	update_flag(R_R0);
+
+}
+
 int main(int argc,const char *argv[])
 {
 	if(argc<2)
@@ -298,6 +332,17 @@ int main(int argc,const char *argv[])
 			case OP_STR:
 				str_op(instr);
 				break;
+			case OP_TRAP:
+				regs[R_R7] = regs[R_PC];
+				switch (instr & 0xFF) 
+				{
+					case TRAP_PUTS:
+						puts_trap();
+						break;
+					case TRAP_GETC:
+						getc_trap();
+						break;
+				}
 		}
 	}
 	return 0;
