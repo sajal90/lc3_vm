@@ -1,4 +1,4 @@
-#include <math.h>
+//#include <math.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -252,12 +252,20 @@ void puts_trap()
 
 void getc_trap()
 {
-	char c = getchar();
 
-	regs[R_R0] = (int) c;
+	regs[R_R0] = (uint16_t) getchar();
 	regs[R_R0] &= 0xFF;
 
 	update_flag(R_R0);
+
+}
+
+void out_trap()
+{
+	char c = (char) (regs[R_R0] & 0xFF);
+	putc(c,stdout);
+
+	fflush(stdout);
 
 }
 
@@ -341,6 +349,9 @@ int main(int argc,const char *argv[])
 						break;
 					case TRAP_GETC:
 						getc_trap();
+						break;
+					case TRAP_OUT:
+						out_trap();
 						break;
 				}
 		}
