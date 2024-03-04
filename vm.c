@@ -67,7 +67,7 @@ enum
 #define MAX_MEM (1<<16)
 uint16_t memory[MAX_MEM];
 uint16_t regs[R_COUNT];
-
+int running=1;
 
 
 uint16_t sign_extend(uint16_t x,int bit_count)
@@ -245,6 +245,7 @@ void puts_trap()
 	while(*c)
 	{
 		putc((char)*c,stdout);
+		++c;
 	}
 	fflush(stdout);
 
@@ -283,8 +284,26 @@ void in_trap()
 
 void putsp_trap()
 {
-	
+	uint16_t *c = memory + regs[R_R0];
 
+	while(*c)
+	{
+		char first = (*c) & 0xFF;
+		char second = ((*c) >> 8) & 0xFF;
+
+		putc(first,stdout);
+		putc(second,stdout);
+
+		++c;
+	}
+	fflush(stdout);
+}
+
+void halt_trap()
+{
+	puts("HALT!");
+	fflush(stdout);
+	running = 0;
 }
 
 int main(int argc,const char *argv[])
@@ -311,7 +330,6 @@ int main(int argc,const char *argv[])
 	enum { PC_START=0x3000 };
 	regs[R_PC]= PC_START;
 
-	int running=1;
 	while(running)
 	{
 		uint16_t instr = mem_read(regs[R_PC]++);
@@ -376,6 +394,9 @@ int main(int argc,const char *argv[])
 						break;
 					case TRAP_PUTSP:
 						putsp_trap();
+						break;
+					case TRAP_HALT:
+						halt_trap();
 						break;
 				}
 		}
