@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h> //unix api
 #include <fcntl.h> //file control options
 
@@ -76,7 +77,21 @@ uint16_t memory[MAX_MEM];
 uint16_t regs[R_COUNT];
 int running=1;
 
-struct termios original_trio;
+struct termios original_tio;
+
+void disable_input_buffering()
+{
+	tcgetattr(STDIN_FILENO,&original_tio);
+	struct termios new_tio = original_tio;
+	new_tio.c_lflag &= ~ICANON & ~ECHO;
+	tcsetattr(STDIN_FILENO, TCSANOW, &new_tio);
+
+}
+
+void restore_input_buffering()
+{
+	tcsetattr(STDIN_FILENO, TCSANOW, &original_tio);
+}
 
 uint16_t check_key()
 {
@@ -88,6 +103,14 @@ uint16_t check_key()
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 0;
 	return select(1,&readfds, NULL, NULL, &timeout) !=0;
+
+}
+
+void handle_interrupt(int signal)
+{
+	restore_input_buffering();
+	printf("\n");
+	exit(-2);
 
 }
 
@@ -103,6 +126,16 @@ uint16_t sign_extend(uint16_t x,int bit_count)
 uint16_t swap16(uint16_t val)
 {
 	return (val >> 8) | (val << 8);
+}
+
+void update_flag(uint16_t r)
+{
+	if(regs[r]==0)
+		regs[R_COND]=FL_ZRO;
+	else if(regs[r]>>15)
+		regs[R_COND]=FL_NEG;
+	else
+		regs[R_COND]=FL_POS;
 }
 
 void read_image_file(FILE *file)
@@ -155,15 +188,6 @@ uint16_t mem_read(uint16_t address)
 
 }
 
-void update_flag(uint16_t r)
-{
-	if(regs[r]==0)
-		regs[R_COND]=FL_ZRO;
-	else if(regs[r]>>15)
-		regs[R_COND]=FL_NEG;
-	else
-		regs[R_COND]=FL_POS;
-}
 
 
 void add_op(uint16_t instr)
@@ -400,6 +424,9 @@ int main(int argc,const char *argv[])
 		}
 	}
 
+	signal(SIGINT, handle_interrupt);
+	disable_input_buffering();
+
 	
 	regs[R_COND]=FL_ZRO;
 
@@ -409,7 +436,7 @@ int main(int argc,const char *argv[])
 	while(running)
 	{
 		uint16_t instr = mem_read(regs[R_PC]++);
-		uint16_t op = instr>>12;
+		uint16_t op = instr >> 12;
 		
 		switch(op)
 		{
@@ -477,5 +504,6 @@ int main(int argc,const char *argv[])
 				}
 		}
 	}
+	restore_input_buffering();
 	return 0;
 }
