@@ -1,9 +1,9 @@
-//#include <math.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h> //unix api
 #include <fcntl.h> //file control options
 
@@ -76,6 +76,20 @@ uint16_t memory[MAX_MEM];
 uint16_t regs[R_COUNT];
 int running=1;
 
+struct termios original_trio;
+
+uint16_t check_key()
+{
+	fd_set readfds;
+	FD_ZERO(&readfds);
+	FD_SET(STDIN_FILENO,&readfds);
+
+	struct timeval timeout;
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 0;
+	return select(1,&readfds, NULL, NULL, &timeout) !=0;
+
+}
 
 uint16_t sign_extend(uint16_t x,int bit_count)
 {
@@ -287,7 +301,7 @@ void sti_op(uint16_t instr)
 	uint16_t r0 = (instr >> 9) & 0x7;
 	uint16_t offset = sign_extend((instr & 0x1FF), 9);
 
-	mem_write(mem_read(regs[R_PC) + offset),regs[r0]);
+	mem_write(mem_read(regs[R_PC] + offset),regs[r0]);
 }
 
 void str_op(uint16_t instr)
