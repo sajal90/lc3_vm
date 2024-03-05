@@ -17,6 +17,7 @@
 enum
 {
 	R_R0=0,
+	R_R1,
 	R_R2,
 	R_R3,
 	R_R4,
@@ -72,7 +73,7 @@ enum
 
 };
 
-#define MAX_MEM (1<<16)
+#define MAX_MEM (1 << 16)
 uint16_t memory[MAX_MEM];
 uint16_t regs[R_COUNT];
 int running=1;
