@@ -64,6 +64,7 @@ enum
 	TRAP_HALT  = 0x25, // halt the program
 };
 
+
 #define MAX_MEM (1<<16)
 uint16_t memory[MAX_MEM];
 uint16_t regs[R_COUNT];
@@ -79,6 +80,37 @@ uint16_t sign_extend(uint16_t x,int bit_count)
 	return x;
 }
 
+uint16_t swap16(uint16_t val)
+{
+	return (val >> 8) | (val << 8);
+}
+
+void read_image_file(FILE *file)
+{
+	uint16_t origin;
+	fread(&origin,sizeof(origin),1,file);
+	origin = swap16(origin);
+
+	uint16_t max_read = MAX_MEM - origin;
+	uint16_t *p = memory + origin;
+	size_t read = fread(p,sizeof(uint16_t), max_read,file);
+	
+	while(read-- > 0)
+	{
+		*p = swap16(*p);
+		++p;
+	}
+}
+
+int read_image(const char *image)
+{
+	FILE *fp = fopen(image,"rb");
+	if(!fp)
+		return 0;
+	read_image_file(fp);
+	fclose(fp);
+	return 1;
+}
 
 void update_flag(uint16_t r)
 {
@@ -305,6 +337,7 @@ void halt_trap()
 	fflush(stdout);
 	running = 0;
 }
+
 
 int main(int argc,const char *argv[])
 {
