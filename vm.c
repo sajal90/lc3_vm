@@ -1,10 +1,10 @@
-#include <stddef.h>
+//#include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <signal.h>
 #include <stdlib.h>
-#include <string.h>
-#include <termios.h>
+//#include <string.h>
+//#include <termios.h>
 #include <unistd.h> //unix api
 #include <fcntl.h> //file control options
 
@@ -31,9 +31,9 @@ enum
 
 enum
 {
-	FL_POS=1<<0,
-	FL_ZRO=1<<1,
-	FL_NEG=1<<2,
+	FL_POS=1 << 0,
+	FL_ZRO=1 << 1,
+	FL_NEG=1 << 2,
 };
 
 enum
@@ -126,7 +126,7 @@ uint16_t sign_extend(uint16_t x,int bit_count)
 
 uint16_t swap16(uint16_t val)
 {
-	return (val >> 8) | (val << 8);
+	return (val << 8) | (val >> 8);
 }
 
 void update_flag(uint16_t r)
@@ -186,7 +186,6 @@ uint16_t mem_read(uint16_t address)
 		}
 	}
 	return memory[address];
-
 }
 
 
@@ -275,12 +274,14 @@ void jsr_op(uint16_t instr)
 
 	if(flag)
 	{
-		regs[R_PC] += sign_extend((instr & 0x7FF),11);
+		uint16_t offset = sign_extend((instr & 0x7FF),11);
+ 
+		regs[R_PC] += offset;
 	}
 	else 
 	{
-		uint16_t r0 = (instr >> 6) & 0x7;
-		regs[R_PC] = regs[r0];
+		uint16_t r1 = (instr >> 6) & 0x7;
+		regs[R_PC] = regs[r1];
 	}
 }
 
@@ -335,7 +336,7 @@ void str_op(uint16_t instr)
 	uint16_t r1 = (instr >> 6) & 0x7;
 	uint16_t offset = sign_extend((instr & 0x3F), 6);
 
-	mem_write(regs[r1] + offset, r0);
+	mem_write(regs[r1] + offset, regs[r0]);
 }
 
 void puts_trap()
@@ -355,19 +356,14 @@ void getc_trap()
 {
 
 	regs[R_R0] = (uint16_t) getchar();
-	regs[R_R0] &= 0xFF;
-
 	update_flag(R_R0);
 
 }
 
 void out_trap()
 {
-	char c = (char) (regs[R_R0] & 0xFF);
-	putc(c,stdout);
-
+	putc((char)regs[R_R0],stdout);
 	fflush(stdout);
-
 }
 
 void in_trap()
@@ -389,10 +385,11 @@ void putsp_trap()
 	while(*c)
 	{
 		char first = (*c) & 0xFF;
-		char second = ((*c) >> 8) & 0xFF;
+		char second = ((*c) >> 8);
 
 		putc(first,stdout);
-		putc(second,stdout);
+		if(second)
+			putc(second,stdout);
 
 		++c;
 	}
@@ -431,7 +428,7 @@ int main(int argc,const char *argv[])
 	
 	regs[R_COND]=FL_ZRO;
 
-	enum { PC_START=0x3000 };
+	enum { PC_START = 0x3000 };
 	regs[R_PC]= PC_START;
 
 	while(running)
@@ -503,6 +500,12 @@ int main(int argc,const char *argv[])
 						halt_trap();
 						break;
 				}
+				break;
+			case OP_RES:
+			case OP_RTI:
+			default:
+				abort();
+				break;
 		}
 	}
 	restore_input_buffering();
